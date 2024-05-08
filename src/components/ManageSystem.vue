@@ -62,7 +62,16 @@ const editFormVisible = ref(false)    // 编辑弹框
 const tableData = ref([])
 // 本地存储
 const list = ref([])
+// 表单填写
+const form = reactive({
+  user: '',
+  status: [],
+  time: [],
+})
 
+function addnew() {
+
+}
 
 
 const onSubmit = () => {
@@ -106,6 +115,7 @@ const onSubmit = () => {
             </div>
           </el-form-item>
 
+
           <el-form-item>
               <el-button type="primary" round size="large" @click="onSubmit">查询</el-button>
             </el-form-item>
@@ -117,11 +127,47 @@ const onSubmit = () => {
             <el-button type="primary" round size="large" @click="dialogFormVisible = true">添加新状态</el-button>
             <el-dialog
               v-model="dialogFormVisible"
-              title="Tips"
+              title="新增订单"
               width="500"
               :before-close="handleClose"
             >
-              <span>This is a message</span>
+            <!-- 对话框表单 -->
+              <el-form size="small" style="width:450px" label-width="100px" :model="form">
+                <!-- 收货人 -->
+                <el-form-item label="收货人">
+                  <el-input
+                    style="width:280px;margin-left:-80px"
+                    v-model="form.user"
+                    placeholder="收货人"
+                  ></el-input>
+                </el-form-item>
+                <!-- 状态 -->
+                <el-form-item label="订单状态">
+                  <el-select
+                    v-model="form.status"
+                    style="width:280px;margin-left:-80px"
+                    placeholder="订单状态">
+                    <el-option label="未发货" value="未受理"></el-option>
+                    <el-option label="已受理" value="已受理"></el-option>
+                    <el-option label="已送达" value="已送达"></el-option>
+                  </el-select>
+                </el-form-item>
+                <!-- 时间选择 -->
+                <el-form-item>
+                  <el-date-picker
+                    style="width:280px;margin-left:-80px"
+                    v-model="form.time"
+                    type="datetime"
+                    value-format="yyyy-MM-dd HH:mm:ss"
+                    placeholder="选择日期时间"
+                  ></el-date-picker>
+
+                </el-form-item>
+
+
+
+              </el-form>
+
               <template #footer>
                 <div class="dialog-footer">
                   <el-button @click="dialogFormVisible = false">Cancel</el-button>
@@ -141,7 +187,13 @@ const onSubmit = () => {
         </div>
       </template>
 
-      <p v-for="o in 4" :key="o" class="text item">{{ 'List item ' + o }}</p>
+
+      <el-table :data="tableData" height="250" border style="width: 100%">
+          <el-table-column prop="time" label="日期" width="180"></el-table-column>
+          <el-table-column prop="user" label="收货人" width="180"></el-table-column>
+          <el-table-column prop="status" label="订单状态"></el-table-column>
+      </el-table>
+
 
       <template #footer>Footer content</template>
     </el-card>
