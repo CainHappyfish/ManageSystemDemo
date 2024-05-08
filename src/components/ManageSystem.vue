@@ -27,6 +27,7 @@ const pickerOptions = reactive({
   shortcuts: [
           {
             text: "最近一周",
+            // ts.json
             onClick(picker) {
               const end = new Date();
               const start = new Date();
@@ -65,13 +66,42 @@ const list = ref([])
 // 表单填写
 const form = reactive({
   user: '',
-  status: [],
+  status: [] as string[],
   time: [],
 })
 
-function addnew() {
+// 本地存储函数
+function addNew() {
 
+  // 将表单数据添加到列表数组的开头
+  list.value.unshift(form);
+  console.log(list)
+  list.value.sort((a, b) => {
+    return new Date(b.time).getTime() - new Date(a.time).getTime();
+  }); //降序
+
+  window.localStorage.setItem("list", JSON.stringify(list.value));
+   // 清空表单数据
+  form.user = '';
+  form.status = [];
+  form.time = [];
+  dialogFormVisible.value = false;//隐藏新增弹框
+  showList();//数据渲染
 }
+
+// 数据渲染
+function showList() {
+  console.log(list.value)
+  const storedList = JSON.parse(window.localStorage.getItem("list") || '[]') || [];
+  tableData.value = storedList.map((item) => {
+    // 假设时间格式是可被 Date 构造函数正确解析的字符串
+    // 如果时间是其他格式，你需要相应地转换或处理它
+    console.log(item)
+    item.time = new Date(item.time).toLocaleString();
+    return item;
+  });
+}
+
 
 
 const onSubmit = () => {
@@ -129,7 +159,6 @@ const onSubmit = () => {
               v-model="dialogFormVisible"
               title="新增订单"
               width="500"
-              :before-close="handleClose"
             >
             <!-- 对话框表单 -->
               <el-form size="small" style="width:450px" label-width="100px" :model="form">
@@ -158,7 +187,6 @@ const onSubmit = () => {
                     style="width:280px;margin-left:-80px"
                     v-model="form.time"
                     type="datetime"
-                    value-format="yyyy-MM-dd HH:mm:ss"
                     placeholder="选择日期时间"
                   ></el-date-picker>
 
@@ -171,7 +199,7 @@ const onSubmit = () => {
               <template #footer>
                 <div class="dialog-footer">
                   <el-button @click="dialogFormVisible = false">Cancel</el-button>
-                  <el-button type="primary" @click="dialogFormVisible = false">
+                  <el-button type="primary" @click="addNew">
                     Confirm
                   </el-button>
                 </div>
