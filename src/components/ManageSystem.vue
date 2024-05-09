@@ -1,131 +1,181 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import {reactive, ref} from 'vue'
 
+interface ItemMessage {
+  user: string
+  status: string
+  time: string
+}
 
-// 表单数据
-// 初始查询表单
-const formInline = reactive({
-  user: '',
-  status: [],
-  time: [],
-})
-// 查询表单
-const searchForm = reactive({
-  user: '',
-  status: [],
-  time: [],
-})
-
-
-// 日期周期
-const pickerOptions = reactive({
-  shortcuts: [
-          {
-            text: "最近一周",
-            // ts.json
-            onClick(picker) {
-              const end = new Date();
-              const start = new Date();
-              start.setTime(start.getTime() - 3600 * 1000 * 24 * 7);
-              picker.$emit("pick", [start, end]);
-            }
-          },
-          {
-            text: "最近一个月",
-            onClick(picker) {
-              const end = new Date();
-              const start = new Date();
-              start.setTime(start.getTime() - 3600 * 1000 * 24 * 30);
-              picker.$emit("pick", [start, end]);
-            }
-          },
-          {
-            text: "最近三个月",
-            onClick(picker) {
-              const end = new Date();
-              const start = new Date();
-              start.setTime(start.getTime() - 3600 * 1000 * 24 * 90);
-              picker.$emit("pick", [start, end]);
-            }
-          }
-        ]
-})
 
 const dialogFormVisible = ref(false)  // 新增弹框
 
 
 // 表格数据
-const tableData = ref([])
+const tableData = ref<ItemMessage[]>([])
 // 本地存储
-const list = ref([])
+let list = ref<ItemMessage[]>([])
 // 表单填写
 const form = reactive({
   user: '',
-  status: [] as string[],
-  time: [],
+  status: '',
+  time: '',
 })
 
 // 本地存储函数
 function addNew() {
+  const timeValue = form.time ? form.time : '未填写';
+  const temp = {
+    user: form.user,
+    status: form.status,
+    time: timeValue
+  }
 
   // 将表单数据添加到列表数组的开头
-  list.value.unshift(form);
-  console.log(list)
+  list.value.unshift(temp);
   list.value.sort((a, b) => {
     return new Date(b.time).getTime() - new Date(a.time).getTime();
   }); //降序
 
+
   window.localStorage.setItem("list", JSON.stringify(list.value));
    // 清空表单数据
+
   form.user = '';
-  form.status = [];
-  form.time = [];
+  form.status = '';
+  form.time = '';
+
+  console.log("list2",list.value[0])
   dialogFormVisible.value = false;//隐藏新增弹框
-  showList();//数据渲染
+
+  showList()//数据渲染
 }
 
 // 数据渲染
 function showList() {
-  const storedList = JSON.parse(window.localStorage.getItem("list") || '[]') || [];
-  tableData.value = storedList.map((item) => {
-    item.time = new Date(item.time).toLocaleString();
-    return item;
+  const storedList = JSON.parse(window.localStorage.getItem("list") || '[]') ;
+  console.log(storedList)
+  tableData.value = storedList.map((item : any) => {
+    if (item.time && !isNaN(Date.parse(item.time))) {
+      // 如果是有效的日期字符串，转换为本地时间字符串
+      item.time = new Date(item.time).toLocaleString();
+    } else {
+      // 如果不是有效的日期字符串，设置为 '无时间'
+      item.time = '未填写';
+    }
+    return item as ItemMessage;
   });
 }
 
 const editFormVisible = ref(false)    // 编辑弹框
+
+interface RowData {
+  user: string;
+  status: string;
+  time: string; // 假设时间是以字符串形式存储的日期
+}
+
 // 编辑每项内容
 const rowItem = reactive({
   user: '',
-  status: [] as string[],
-  time: [],
+  status: '',
+  time: '',
 })
+
 // 编辑表单
 const editForm = reactive({
   user: '',
-  status: [] as string[],
-  time: [],
+  status: '',
+  time: '',
 })
 
 // 编辑按钮事件
-function handleEdit(row) {
+function handleEdit(row : RowData) {
   editFormVisible.value = true
-  rowItem.value = row
+  rowItem.user = row.user;
+  rowItem.status = row.status;
+  rowItem.time = row.time;
   editForm.user = rowItem.user
   editForm.status = rowItem.status
   editForm.time = rowItem.time
-}
 
+}
+import { ElMessageBox, ElMessage } from 'element-plus';
+// 提交修改
+function submitEdit() {
+  // 找到要更新的行的索引
+  const index = list.value.findIndex((item) => item.user === rowItem.user)
+  if (index !== -1) {
+    // 更新数据
+    list.value[index] = { ...editForm, time: new Date(editForm.time).toISOString() };
+    list.value.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
+    window.localStorage.setItem("list", JSON.stringify(list.value));
+    showList();
+    ElMessage({
+      type: 'success',
+      message: '已编辑'
+    })
+
+  }else {
+    alert("Wrong!")
+  }
+
+  editFormVisible.value = false
+}
 // 删除按钮事件
-function handleDelete(row: any) {
+function handleDelete(row: ItemMessage) {
+  ElMessageBox.confirm(
+      '确定删除该记录？',
+      '警告',
+      {
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel',
+        type: 'warning'
+      }
+  )
+      .then(() => {
+        // 找到要更新的行的索引
+        const index = list.value.indexOf(row)
+        list.value.splice(index, 1)
+        window.localStorage.setItem("list", JSON.stringify(list.value))
+        showList()                   // 更新表格数据
+        ElMessage({
+          type: 'success',
+          message: '已删除'
+        })
+      })
+      .catch(() => {
+        ElMessage({
+          type: 'info',
+          message: '已取消删除'
+        })
+      })
+}
 
+// 初始查询表单
+const formInline = reactive({
+  user: '',
+  status: '',
+  time: '',
+})
+// 查询数据
+const searchData = ref<ItemMessage[]>([])
+// 查询表单
+const searchForm = reactive({
+  user: '',
+  status: '',
+  time: '',
+})
+// 处理查询请求
+function onSubmit() {
+  searchForm.user = formInline.user
+  searchForm.status = formInline.status
+  searchForm.time = formInline.time
 }
 
 
+// 页码实现
 
-const onSubmit = () => {
-  console.log('submit!')
-}
 </script>
 
 <template>
@@ -140,33 +190,32 @@ const onSubmit = () => {
               <el-input v-model="formInline.user" placeholder="收货人" size="large"></el-input>
             </el-form-item>
 
-          <!-- 订单状态 -->
-          <el-form-item label="订单状态">
-            <el-select v-model="formInline.status" placeholder="订单状态" style="width: 200px" size="large">
-              <el-option label="未受理" value="未受理"></el-option>
-              <el-option label="已受理" value="已受理"></el-option>
-              <el-option label="已送达" value="已送达"></el-option>
-            </el-select>
-          </el-form-item>
+            <!-- 订单状态 -->
+            <el-form-item label="订单状态">
+              <el-select v-model="formInline.status" placeholder="订单状态" style="width: 200px" size="large">
+                <el-option label="未受理" value="未受理"></el-option>
+                <el-option label="已受理" value="已受理"></el-option>
+                <el-option label="已送达" value="已送达"></el-option>
+              </el-select>
+            </el-form-item>
 
-          <!-- 时间选择 -->
-          <el-form-item>
-            <div class="date-picker">
-              <el-date-picker
-              v-model="formInline.time"
-              type="datetimerange"
-              :picker-options="pickerOptions"
-              range-separator="至"
-              start-placeholder="开始日期"
-              end-placeholder="结束日期"
-              size="large"
-              ></el-date-picker>
-            </div>
-          </el-form-item>
+            <!-- 时间选择 -->
+            <el-form-item>
+              <div class="date-picker">
+                <el-date-picker
+                v-model="formInline.time"
+                type="datetimerange"
+                range-separator="至"
+                start-placeholder="开始日期"
+                end-placeholder="结束日期"
+                size="large"
+                ></el-date-picker>
+              </div>
+            </el-form-item>
 
-
-          <el-form-item>
-              <el-button type="primary" round size="large" @click="onSubmit">查询</el-button>
+            <!--  查询 -->
+            <el-form-item>
+                <el-button type="primary" round size="large" @click="onSubmit">查询</el-button>
             </el-form-item>
 
           </el-form>
@@ -196,7 +245,7 @@ const onSubmit = () => {
                   <!-- 订单状态 -->
                   <el-form-item label="订单状态">
                     <el-select style="width:300px;" v-model="editForm.status" placeholder="订单状态">
-                      <el-option label="未发货" value="未受理"></el-option>
+                      <el-option label="未受理" value="未受理"></el-option>
                       <el-option label="已受理" value="已受理"></el-option>
                       <el-option label="已送达" value="已送达"></el-option>
                     </el-select>
@@ -206,13 +255,18 @@ const onSubmit = () => {
                     <el-date-picker
                       style="width:300px"
                       v-model="editForm.time"
-                      value-format="yyyy-MM-dd HH:mm:ss"
                       type="datetime"
                       placeholder="选择日期时间"
                     ></el-date-picker>
                   </el-form-item>
               </el-form>
               <template #footer>
+                <div class="dialog-footer">
+                  <el-button @click="editFormVisible = false">Cancel</el-button>
+                  <el-button type="primary" @click="submitEdit">
+                    Confirm
+                  </el-button>
+                </div>
 
               </template>
             </el-dialog>
@@ -233,7 +287,7 @@ const onSubmit = () => {
             <el-dialog
               v-model="dialogFormVisible"
               title="新增订单"
-              width="500"
+              width="500px"
             >
             <!-- 对话框表单 -->
               <el-form size="small" style="width:450px" label-width="100px" :model="form">
@@ -251,7 +305,7 @@ const onSubmit = () => {
                     v-model="form.status"
                     style="width:280px;margin-left:-80px"
                     placeholder="订单状态">
-                    <el-option label="未发货" value="未受理"></el-option>
+                    <el-option label="未受理" value="未受理"></el-option>
                     <el-option label="已受理" value="已受理"></el-option>
                     <el-option label="已送达" value="已送达"></el-option>
                   </el-select>
