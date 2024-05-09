@@ -15,12 +15,7 @@ const searchForm = reactive({
   status: [],
   time: [],
 })
-// 编辑表单
-const editForm = reactive({
-  user: '',
-  status: [],
-  time: [],
-})
+
 
 // 日期周期
 const pickerOptions = reactive({
@@ -57,7 +52,7 @@ const pickerOptions = reactive({
 })
 
 const dialogFormVisible = ref(false)  // 新增弹框
-const editFormVisible = ref(false)    // 编辑弹框
+
 
 // 表格数据
 const tableData = ref([])
@@ -91,15 +86,39 @@ function addNew() {
 
 // 数据渲染
 function showList() {
-  console.log(list.value)
   const storedList = JSON.parse(window.localStorage.getItem("list") || '[]') || [];
   tableData.value = storedList.map((item) => {
-    // 假设时间格式是可被 Date 构造函数正确解析的字符串
-    // 如果时间是其他格式，你需要相应地转换或处理它
-    console.log(item)
     item.time = new Date(item.time).toLocaleString();
     return item;
   });
+}
+
+const editFormVisible = ref(false)    // 编辑弹框
+// 编辑每项内容
+const rowItem = reactive({
+  user: '',
+  status: [] as string[],
+  time: [],
+})
+// 编辑表单
+const editForm = reactive({
+  user: '',
+  status: [] as string[],
+  time: [],
+})
+
+// 编辑按钮事件
+function handleEdit(row) {
+  editFormVisible.value = true
+  rowItem.value = row
+  editForm.user = rowItem.user
+  editForm.status = rowItem.status
+  editForm.time = rowItem.time
+}
+
+// 删除按钮事件
+function handleDelete(row: any) {
+
 }
 
 
@@ -112,7 +131,7 @@ const onSubmit = () => {
 <template>
 
   <div id="app">
-    <el-card style="max-width: 600px">
+    <el-card style="max-width: 700px">
       <template #header>
         <div slot="header" class="card-header">
           <!-- 收货人 -->
@@ -152,7 +171,63 @@ const onSubmit = () => {
 
           </el-form>
 
-          <!-- 增加新项目 -->
+
+        </div>
+      </template>
+
+
+      <el-table :data="tableData" height="250" style="width: 100%; margin-top: 0">
+        <el-table-column prop="time" label="日期" width="180"></el-table-column>
+        <el-table-column prop="user" label="收货人" width="180"></el-table-column>
+        <el-table-column prop="status" label="订单状态"></el-table-column>
+        <el-table-column label="操作" style="text-align: center" >
+          <template #default="scope">
+            <el-button size="small" @click="handleEdit(scope.row)">
+              编辑
+            </el-button>
+            <el-dialog
+                v-model="editFormVisible"
+                title="编辑订单"
+            >
+              <el-form size="default" style="width: 500px" label-width="100px" :model="editForm">
+                <el-form-item label="收货人">
+                    <el-input style="width:300px;" v-model="editForm.user" placeholder="收货人"></el-input>
+                  </el-form-item>
+                  <!-- 订单状态 -->
+                  <el-form-item label="订单状态">
+                    <el-select style="width:300px;" v-model="editForm.status" placeholder="订单状态">
+                      <el-option label="未发货" value="未受理"></el-option>
+                      <el-option label="已受理" value="已受理"></el-option>
+                      <el-option label="已送达" value="已送达"></el-option>
+                    </el-select>
+                  </el-form-item>
+                <!-- 下单时间 -->
+                  <el-form-item label="下单时间">
+                    <el-date-picker
+                      style="width:300px"
+                      v-model="editForm.time"
+                      value-format="yyyy-MM-dd HH:mm:ss"
+                      type="datetime"
+                      placeholder="选择日期时间"
+                    ></el-date-picker>
+                  </el-form-item>
+              </el-form>
+              <template #footer>
+
+              </template>
+            </el-dialog>
+            <el-button size="small" type="danger" @click="handleDelete(scope.row)" style="margin-left: 10px">
+              删除
+            </el-button>
+          </template>
+
+        </el-table-column>
+
+      </el-table>
+
+
+      <template #footer>
+        <!-- 增加新项目 -->
           <div class="new">
             <el-button type="primary" round size="large" @click="dialogFormVisible = true">添加新状态</el-button>
             <el-dialog
@@ -207,23 +282,7 @@ const onSubmit = () => {
             </el-dialog>
 
           </div>
-
-
-
-
-
-        </div>
       </template>
-
-
-      <el-table :data="tableData" height="250" border style="width: 100%">
-          <el-table-column prop="time" label="日期" width="180"></el-table-column>
-          <el-table-column prop="user" label="收货人" width="180"></el-table-column>
-          <el-table-column prop="status" label="订单状态"></el-table-column>
-      </el-table>
-
-
-      <template #footer>Footer content</template>
     </el-card>
 
   </div>
