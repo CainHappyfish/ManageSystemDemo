@@ -171,6 +171,7 @@ function onSubmit() {
   searchForm.user = formInline.user
   searchForm.status = formInline.status
   searchForm.time = formInline.time
+  searchData.value = []
 }
 
 
@@ -226,8 +227,8 @@ function onSubmit() {
 
 
       <el-table :data="tableData" height="250" style="width: 100%; margin-top: 0">
-        <el-table-column prop="time" label="日期" width="180"></el-table-column>
-        <el-table-column prop="user" label="收货人" width="180"></el-table-column>
+        <el-table-column prop="time" label="时间" width="180"></el-table-column>
+        <el-table-column prop="user" label="收货人" width="100"></el-table-column>
         <el-table-column prop="status" label="订单状态"></el-table-column>
         <el-table-column label="操作" style="text-align: center" >
           <template #default="scope">
