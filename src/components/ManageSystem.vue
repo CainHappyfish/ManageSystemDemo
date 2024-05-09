@@ -181,7 +181,7 @@ function onSubmit() {
 <template>
 
   <div id="app">
-    <el-card style="max-width: 700px">
+    <el-card style="max-width: 600px">
       <template #header>
         <div slot="header" class="card-header">
           <!-- 收货人 -->
@@ -287,10 +287,10 @@ function onSubmit() {
             <el-dialog
               v-model="dialogFormVisible"
               title="新增订单"
-              width="500px"
+              width="350px"
             >
             <!-- 对话框表单 -->
-              <el-form size="small" style="width:450px" label-width="100px" :model="form">
+              <el-form size="large" style="width:450px" label-width="100px" :model="form">
                 <!-- 收货人 -->
                 <el-form-item label="收货人">
                   <el-input
@@ -348,5 +348,17 @@ function onSubmit() {
   justify-content: center;
   place-items: center;
   align-items: center;
+}
+.new {
+  display: flex; /* 使用 Flexbox */
+  justify-content: center; /* 水平居中 */
+  align-items: center; /* 垂直居中 */
+}
+.dialog-footer {
+  display: flex; /* 使用 Flexbox */
+  justify-content: center; /* 水平居中 */
+  align-items: center; /* 垂直居中 */
+  /* 如果需要垂直居中，可以添加以下属性 */
+  height: 60px; /* 对话框底部的高度，根据实际情况调整 */
 }
 </style>
