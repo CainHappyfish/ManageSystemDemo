@@ -47,7 +47,10 @@ function addNew() {
 
   console.log("list2",list.value[0])
   dialogFormVisible.value = false;//隐藏新增弹框
-
+  ElMessage({
+    type: 'success',
+    message: '已添加'
+  })
   showList()//数据渲染
 }
 
@@ -107,7 +110,7 @@ function submitEdit() {
   const index = list.value.findIndex((item) => item.user === rowItem.user)
   if (index !== -1) {
     // 更新数据
-    list.value[index] = { ...editForm, time: new Date(editForm.time).toISOString() };
+    list.value[index] = { ...editForm, time: new Date(editForm.time).toLocaleString() };
     list.value.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
     window.localStorage.setItem("list", JSON.stringify(list.value));
     showList();
@@ -122,6 +125,7 @@ function submitEdit() {
 
   editFormVisible.value = false
 }
+
 // 删除按钮事件
 function handleDelete(row: ItemMessage) {
   ElMessageBox.confirm(
@@ -167,12 +171,65 @@ const searchForm = reactive({
   time: '',
 })
 // 处理查询请求
-function onSubmit() {
+function itemSearch() {
   searchForm.user = formInline.user
   searchForm.status = formInline.status
   searchForm.time = formInline.time
-  searchData.value = []
+  if (searchForm.user) {
+    searchData.value = list.value.filter((item: ItemMessage) => item.user == searchForm.user)
+    if (searchForm.status) {
+      searchData.value = list.value.filter(
+          (item: ItemMessage) => item.user == searchForm.user && item.status == searchForm.status
+      )
+      if (searchForm.time) {
+        searchData.value = list.value.filter(
+          (item: ItemMessage) => item.user == searchForm.user
+              && item.status == searchForm.status && item.time == searchForm.time
+        )
+      }
+    }
+  }
+  else if (searchForm.status) {
+    searchData.value = list.value.filter((item: ItemMessage) => item.status == searchForm.status)
+    if (searchForm.user) {
+      searchData.value = list.value.filter(
+          (item: ItemMessage) => item.user == searchForm.user && item.status == searchForm.status
+      )
+      if (searchForm.time) {
+        searchData.value = list.value.filter(
+          (item: ItemMessage) => item.user == searchForm.user
+              && item.status == searchForm.status && item.time == searchForm.time
+        )
+      }
+    }
+  }
+  else if (searchForm.time) {
+    searchData.value = list.value.filter((item: ItemMessage) => item.time == searchForm.time)
+    if (searchForm.user) {
+      searchData.value = list.value.filter(
+          (item: ItemMessage) => item.user == searchForm.user && item.status == searchForm.time
+      )
+      if (searchForm.status) {
+        searchData.value = list.value.filter(
+          (item: ItemMessage) => item.user == searchForm.user
+              && item.status == searchForm.status && item.time == searchForm.time
+        )
+      }
+    }
+  }
+  console.log(searchData.value[0])
+
+
 }
+
+// 时间查询
+function searchTime() {
+  
+}
+
+
+
+
 
 
 // 页码实现
@@ -187,12 +244,12 @@ function onSubmit() {
         <div slot="header" class="card-header">
           <!-- 收货人 -->
           <el-form size="small" :inline="true" :model="formInline" class="demo-form-inline" label-position="top">
-            <el-form-item label="收货人">
+            <el-form-item>
               <el-input v-model="formInline.user" placeholder="收货人" size="large"></el-input>
             </el-form-item>
 
             <!-- 订单状态 -->
-            <el-form-item label="订单状态">
+            <el-form-item>
               <el-select v-model="formInline.status" placeholder="订单状态" style="width: 200px" size="large">
                 <el-option label="未受理" value="未受理"></el-option>
                 <el-option label="已受理" value="已受理"></el-option>
@@ -216,7 +273,7 @@ function onSubmit() {
 
             <!--  查询 -->
             <el-form-item>
-                <el-button type="primary" round size="large" @click="onSubmit">查询</el-button>
+                <el-button type="primary" round size="large" @click="itemSearch">查询</el-button>
             </el-form-item>
 
           </el-form>
