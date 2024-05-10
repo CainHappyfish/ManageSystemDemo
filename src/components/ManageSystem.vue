@@ -204,10 +204,10 @@ function itemSearch() {
     }
   }
   else if (searchForm.time) {
-    searchData.value = list.value.filter((item: ItemMessage) => item.time == searchForm.time)
+    searchData.value = searchTime()
     if (searchForm.user) {
       searchData.value = list.value.filter(
-          (item: ItemMessage) => item.user == searchForm.user && item.status == searchForm.time
+          (item: ItemMessage) => item.user == searchForm.user && item.time == searchForm.time
       )
       if (searchForm.status) {
         searchData.value = list.value.filter(
@@ -224,7 +224,11 @@ function itemSearch() {
 
 // 时间查询
 function searchTime() {
-  
+  const time1 = new Date(searchForm.time[0]).getTime()
+  const time2 = new Date(searchForm.time[1]).getTime()
+  return list.value.filter((item: ItemMessage) =>
+    time1 <= new Date(item.time).getTime() && new Date(item.time).getTime() <= time2
+  )
 }
 
 
