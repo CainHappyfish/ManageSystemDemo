@@ -217,7 +217,7 @@ function itemSearch() {
       }
     }
   }
-  console.log(searchData.value[0])
+
 
 
 }
@@ -232,11 +232,12 @@ function searchTime() {
 }
 
 
-
-
-
-
 // 页码实现
+const currentPage = ref(0)
+function handlePage(val) {
+  currentPage.value = val
+  
+}
 
 </script>
 
