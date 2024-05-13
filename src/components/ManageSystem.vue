@@ -233,8 +233,11 @@ function searchTime() {
 
 
 // 页码实现
-const currentPage = ref(0)
-function handlePage(val) {
+const currentPage = ref(1)
+const total = ref(0)
+const pageSize = ref(3)     // 每页条数
+const value = ref(true)
+function handlePage(val: number) {
   currentPage.value = val
   
 }
@@ -341,6 +344,18 @@ function handlePage(val) {
         </el-table-column>
 
       </el-table>
+      <div style="margin-top: 16px">
+        <el-pagination small background
+          @current-change="handlePage"
+          :current-page="currentPage"
+          layout="prev, pager, next, jumper"
+          :page-size="pageSize"
+          :page-sizes="[3, 5, 7, 10, 20]"
+          :hide-on-single-page="true"
+
+          :total="total"/>
+      </div>
+
 
 
       <template #footer>
