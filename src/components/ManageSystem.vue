@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {reactive, ref} from 'vue'
+import {reactive, ref, Ref} from 'vue'
 
 interface ItemMessage {
   user: string
@@ -25,10 +25,14 @@ const form = reactive({
 // 本地存储函数
 function addNew() {
   const timeValue = form.time ? form.time : '未填写';
+  const statusValue = form.status ? form.status : '未填写';
+  const userValue = form.user ? form.user : '未填写';
+
+  const timeString = form.time ? new Date(form.time).toLocaleString() : timeValue;
   const temp = {
-    user: form.user,
-    status: form.status,
-    time: timeValue
+    user: userValue,
+    status: statusValue,
+    time: timeString
   }
 
   // 将表单数据添加到列表数组的开头
@@ -45,7 +49,6 @@ function addNew() {
   form.status = '';
   form.time = '';
 
-  console.log("list2",list.value[0])
   dialogFormVisible.value = false;//隐藏新增弹框
   ElMessage({
     type: 'success',
@@ -57,7 +60,6 @@ function addNew() {
 // 数据渲染
 function showList() {
   const storedList = JSON.parse(window.localStorage.getItem("list") || '[]') ;
-  console.log(storedList)
   tableData.value = storedList.map((item : any) => {
     if (item.time && !isNaN(Date.parse(item.time))) {
       // 如果是有效的日期字符串，转换为本地时间字符串
@@ -68,6 +70,7 @@ function showList() {
     }
     return item as ItemMessage;
   });
+  total.value = tableData.value.length
 }
 
 const editFormVisible = ref(false)    // 编辑弹框
@@ -178,47 +181,50 @@ function itemSearch() {
   if (searchForm.user) {
     searchData.value = list.value.filter((item: ItemMessage) => item.user == searchForm.user)
     if (searchForm.status) {
-      searchData.value = list.value.filter(
-          (item: ItemMessage) => item.user == searchForm.user && item.status == searchForm.status
+      searchData.value = searchData.value.filter(
+          (item: ItemMessage) => item.status == searchForm.status
       )
       if (searchForm.time) {
-        searchData.value = list.value.filter(
-          (item: ItemMessage) => item.user == searchForm.user
-              && item.status == searchForm.status && item.time == searchForm.time
-        )
+        searchData.value = searchTime()
       }
     }
   }
   else if (searchForm.status) {
     searchData.value = list.value.filter((item: ItemMessage) => item.status == searchForm.status)
     if (searchForm.user) {
-      searchData.value = list.value.filter(
-          (item: ItemMessage) => item.user == searchForm.user && item.status == searchForm.status
+      searchData.value = searchData.value.filter(
+          (item: ItemMessage) => item.user == searchForm.user
       )
       if (searchForm.time) {
-        searchData.value = list.value.filter(
-          (item: ItemMessage) => item.user == searchForm.user
-              && item.status == searchForm.status && item.time == searchForm.time
-        )
+        searchTime()
       }
     }
   }
   else if (searchForm.time) {
     searchData.value = searchTime()
     if (searchForm.user) {
-      searchData.value = list.value.filter(
-          (item: ItemMessage) => item.user == searchForm.user && item.time == searchForm.time
+      searchData.value = searchData.value.filter(
+          (item: ItemMessage) => item.user == searchForm.user
       )
       if (searchForm.status) {
-        searchData.value = list.value.filter(
-          (item: ItemMessage) => item.user == searchForm.user
-              && item.status == searchForm.status && item.time == searchForm.time
+        searchData.value = searchData.value.filter(
+          (item: ItemMessage) => item.status == searchForm.status
         )
       }
     }
   }
+  if (searchData.value.length) {
+    total.value = searchData.value.length
+    changePage(searchData)
+  }
+  else {
+    total.value = list.value.length
+    changePage(list)
+    ElMessageBox.alert("未找到相关数据", "提示", {
+      confirmButtonText:"OK"
+    })
 
-
+  }
 
 }
 
@@ -226,7 +232,7 @@ function itemSearch() {
 function searchTime() {
   const time1 = new Date(searchForm.time[0]).getTime()
   const time2 = new Date(searchForm.time[1]).getTime()
-  return list.value.filter((item: ItemMessage) =>
+  return list.value.filter((item: any) =>
     time1 <= new Date(item.time).getTime() && new Date(item.time).getTime() <= time2
   )
 }
@@ -235,11 +241,27 @@ function searchTime() {
 // 页码实现
 const currentPage = ref(1)
 const total = ref(0)
-const pageSize = ref(3)     // 每页条数
-const value = ref(true)
+const pageSize = ref(5)     // 每页条数
+
 function handlePage(val: number) {
   currentPage.value = val
+  console.log("val", val)
+  if (searchData.value.length) {
+    console.log("search page")
+    changePage(searchData)
+  }
+  else {
+    console.log("list page")
+    changePage(list)
+  }
   
+}
+
+function changePage(obj: Ref<ItemMessage[]>) {
+  const n: number = (currentPage.value - 1) * pageSize.value
+  console.log("n", n)
+  tableData.value = obj.value.slice(n, n + pageSize.value)
+  console.log("tableData", tableData.value[0])
 }
 
 </script>
@@ -348,10 +370,9 @@ function handlePage(val: number) {
         <el-pagination small background
           @current-change="handlePage"
           :current-page="currentPage"
-          layout="prev, pager, next, jumper"
+          layout="total, prev, pager, next, jumper"
           :page-size="pageSize"
           :page-sizes="[3, 5, 7, 10, 20]"
-          :hide-on-single-page="true"
 
           :total="total"/>
       </div>
